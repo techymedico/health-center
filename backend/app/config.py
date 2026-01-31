@@ -17,12 +17,12 @@ class Settings(BaseSettings):
     SMTP_FROM: str = ""  # Same as SMTP_USER usually
     
     # Web Push Notifications (VAPID keys)
-    VAPID_PRIVATE_KEY: str = ""
-    VAPID_PUBLIC_KEY: str = ""
-    VAPID_CLAIMS_EMAIL: str = "mailto:admin@example.com"
+    VAPID_PRIVATE_KEY: str = "yUOPEFAijliQeSus_vSnnW7REZRk06Z1zuYWyTYNeGQ="
+    VAPID_PUBLIC_KEY: str = "BEJpKLwgDm7pKcIEA85xbHS9mKskZFU0Lujcm1fvcioxm7olRQydUIQ_I5hUYErA9kwHO6wnGKE_7XlGhvu8Cn0="
+    VAPID_EMAIL: str = "mailto:admin@iitj.ac.in"
     
     # Firebase Configuration
-    FIREBASE_CREDENTIALS_PATH: str = ""  # Path to firebase-service-account.json
+    FIREBASE_CREDENTIALS_PATH: str = "./firebase-service-account.json"  # Path to firebase-service-account.json
     
     # Scheduler Settings
     SCRAPER_INTERVAL_HOURS: int = 6
