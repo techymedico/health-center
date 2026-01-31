@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IITJ Health Center</string>
+    <string name="default_notification_channel_id">doctor_notifications</string>
+    <string name="notification_channel_name">Doctor Notifications</string>
+    <string name="notification_channel_description">Notifications for doctor duty schedules</string>
+</resources>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IITJ Doctor Schedule Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #3f51b5;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        #alerts-section {
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        .alert-card {
+            background-color: #ffe0b2;
+            border-left: 5px solid #ff9800;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .alert-card.critical {
+            background-color: #ffcdd2;
+            border-left: 5px solid #f44336;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #3f51b5;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .badge-regular {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .badge-visiting {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #777;
+            font-style: italic;
+        }
+
+        .refresh-btn {
+            float: right;
+            background: #3f51b5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .refresh-btn:hover {
+            background: #303f9f;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>IITJ Health Center - Doctor Schedule</h1>
+    </header>
+
+    <div class="container">
+
+        <div id="alerts-section">
+            <!-- Alerts will be injected here -->
+        </div>
+
+        <div class="card">
+            <button class="refresh-btn" onclick="fetchData()">Refresh Data</button>
+            <h2>Current Schedule</h2>
+            <div id="schedule-container">
+                <div class="loading">Loading schedule data...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        async function fetchData() {
+            console.log("Fetching data from:", API_URL);
+            await Promise.all([fetchSchedule(), fetchNotifications()]);
+        }
+
+        async function fetchSchedule() {
+            const container = document.getElementById('schedule-container');
+            try {
+                const response = await fetch(`${API_URL}/schedule`);
+                const json = await response.json();
+                const data = json.data;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p>No schedule data available.</p>';
+                    return;
+                }
+
+                // Group by Sheet Name (Day)
+                const grouped = {};
+                data.forEach(row => {
+                    const day = row['Sheet Name'] || 'Unknown Date';
+                    if (!grouped[day]) grouped[day] = [];
+                    grouped[day].push(row);
+                });
+
+                let html = '';
+                for (const [day, rows] of Object.entries(grouped)) {
+                    html += `<h3>${day}</h3>`;
+                    html += `<table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Doctor Name</th>
+                            <th>Time</th>
+                            <th>Room / Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                    rows.forEach(row => {
+                        // Try to display Regular Doctors
+                        if (row['REGULAR DOCTORS/ DENTIST.1']) {
+                            html += `<tr>
+                            <td><span class="badge badge-regular">Regular</span></td>
+                            <td>${row['REGULAR DOCTORS/ DENTIST.1']}</td>
+                            <td>${row['REGULAR DOCTORS/ DENTIST.3'] || '-'}</td>
+                            <td>${row['REGULAR DOCTORS/ DENTIST.2'] || ''}</td>
+                        </tr>`;
+                        }
+                        // Try to display Visiting Doctors
+                        if (row['VISITING SPECIALISTS DOCTORS.1']) {
+                            html += `<tr>
+                            <td><span class="badge badge-visiting">Visiting</span></td>
+                            <td>${row['VISITING SPECIALISTS DOCTORS.1']} <small>(${row['VISITING SPECIALISTS DOCTORS.2'] || ''})</small></td>
+                            <td>${row['VISITING SPECIALISTS DOCTORS.4'] || '-'}</td>
+                            <td>${row['VISITING SPECIALISTS DOCTORS.3'] || ''}</td>
+                        </tr>`;
+                        }
+                    });
+
+                    html += `</tbody></table><br>`;
+                }
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                container.innerHTML = `<p class="error">Error loading schedule: ${error.message}</p>`;
+            }
+        }
+
+        async function fetchNotifications() {
+            const section = document.getElementById('alerts-section');
+            try {
+                const response = await fetch(`${API_URL}/notifications`);
+                const json = await response.json();
+                const alerts = json.alerts;
+
+                if (alerts && alerts.length > 0) {
+                    section.style.display = 'block';
+                    let html = '<h2>🔔 Upcoming Doctors (Next 60 Mins)</h2>';
+                    alerts.forEach(alert => {
+                        html += `<div class="alert-card ${alert.starts_in_minutes < 15 ? 'critical' : ''}">
+                        <div>
+                            <div class="alert-title">${alert.name}</div>
+                            <div>${alert.category} • Arriving in <strong>${alert.starts_in_minutes} mins</strong></div>
+                        </div>
+                        <div class="badge">${alert.time_range}</div>
+                    </div>`;
+                    });
+                    section.innerHTML = html;
+                } else {
+                    section.style.display = 'none';
+                    section.innerHTML = '';
+                }
+            } catch (error) {
+                console.error("Failed to fetch notifications", error);
+            }
+        }
+
+        // Load on start
+        fetchData();
+
+        // Auto refresh every 5 mins
+        setInterval(fetchData, 300000); 
+    </script>
+
+</body>
+
+</html>

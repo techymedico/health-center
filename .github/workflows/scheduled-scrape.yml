@@ -1,0 +1,26 @@
+name: Scheduled Scraping and Keep-Alive
+
+on:
+  schedule:
+    # Run at 6 AM IST (12:30 AM UTC) daily
+    - cron: '30 0 * * *'
+    # Keep service alive - run every 10 minutes during business hours (9 AM - 6 PM IST)
+    - cron: '*/10 3-12 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  scrape-and-ping:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger scrape
+        run: |
+          curl -X POST "${{ secrets.BACKEND_URL }}/ingest-scraped-data"
+        
+      - name: Keep service alive
+        run: |
+          curl "${{ secrets.BACKEND_URL }}/health"
+          
+      - name: Log result
+        run: |
+          echo "Scraper triggered and service pinged at $(date)"
