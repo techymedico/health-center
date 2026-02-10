@@ -113,7 +113,7 @@ def check_and_notify(db: Session):
     """
     try:
         from app.database import Schedule, FCMToken, DoctorSubscription
-        from app.services.fcm_service import send_fcm_multicast
+        from app.services.fcm_rest import send_fcm_multicast_rest
         
         # Get all schedules
         schedules = db.query(Schedule).all()
@@ -183,7 +183,7 @@ def check_and_notify(db: Session):
                         "starts_in_minutes": str(doctor_info['starts_in_minutes'])
                     }
                     
-                    result = send_fcm_multicast(fcm_tokens, title, body, data)
+                    result = send_fcm_multicast_rest(fcm_tokens, title, body, data)
                     logger.info(f"FCM sent to {result['success']} devices for {doctor_name}")
         
     except Exception as e:
