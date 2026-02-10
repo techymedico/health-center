@@ -142,7 +142,7 @@ def send_test_notification(
     """
     try:
         from app.database import FCMToken, DoctorSubscription
-        from app.services.fcm_service import send_fcm_multicast
+        from app.services.fcm_rest import send_fcm_multicast_rest
         
         fcm_tokens = []
         
@@ -189,7 +189,7 @@ def send_test_notification(
             "target": target_desc
         }
         
-        result = send_fcm_multicast(fcm_tokens, title, body, data)
+        result = send_fcm_multicast_rest(fcm_tokens, title, body, data)
         
         logger.info(f"Test notification sent: {result['success']} success, {result['failure']} failed")
         
