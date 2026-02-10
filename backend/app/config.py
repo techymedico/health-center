@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     FIREBASE_CREDENTIALS_PATH: str = "./firebase-service-account.json"  # Path to firebase-service-account.json
     
     # Scheduler Settings
-    SCRAPER_INTERVAL_HOURS: int = 6
+    SCRAPER_INTERVAL_HOURS: int = 3
     NOTIFICATION_INTERVAL_MINUTES: int = 1
     
     # App Settings

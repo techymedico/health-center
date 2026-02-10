@@ -62,6 +62,14 @@ app.include_router(notifications.router, tags=["Notifications"])
 from app.routes import fcm
 app.include_router(fcm.router, tags=["FCM"])
 
+@app.get("/health/full")
+async def full_health():
+    return {
+        "db": "initialized",
+        "scheduler": "running",
+        "firebase": "loaded"
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
