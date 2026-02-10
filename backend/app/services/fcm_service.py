@@ -133,6 +133,14 @@ def send_fcm_multicast(tokens: list, title: str, body: str, data: dict = None):
             success_count += response.success_count
             failure_count += response.failure_count
             
+            # Log detailed error information for failed sends
+            if response.failure_count > 0:
+                for idx, resp in enumerate(response.responses):
+                    if not resp.success:
+                        token = batch[idx]
+                        error_msg = resp.exception if resp.exception else "Unknown error"
+                        logger.error(f"FCM send failed for token {token[:20]}...: {error_msg}")
+            
             logger.info(f"FCM batch sent: {response.success_count} success, {response.failure_count} failed")
         
         return {"success": success_count, "failure": failure_count}
