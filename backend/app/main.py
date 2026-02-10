@@ -62,6 +62,13 @@ app.include_router(notifications.router, tags=["Notifications"])
 from app.routes import fcm
 app.include_router(fcm.router, tags=["FCM"])
 
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {
+        "status": "ok",
+        "message": "Health Center API is running"
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
