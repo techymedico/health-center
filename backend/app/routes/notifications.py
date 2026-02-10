@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 import json
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -123,3 +124,84 @@ def get_subscriptions(db: Session = Depends(get_db)):
         "count": len(results),
         "data": results
     }
+
+@router.post("/test-notification")
+def send_test_notification(
+    doctor_name: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Send a test notification to verify FCM is working.
+    
+    If doctor_name is provided, sends to subscribers of that doctor.
+    If not provided, sends to ALL registered devices.
+    
+    Example:
+        POST /test-notification?doctor_name=Dr.%20Smith
+        POST /test-notification (sends to all)
+    """
+    try:
+        from app.database import FCMToken, DoctorSubscription
+        from app.services.fcm_service import send_fcm_multicast
+        
+        fcm_tokens = []
+        
+        if doctor_name:
+            # Send to specific doctor's subscribers
+            doctor_subs = db.query(DoctorSubscription).filter(
+                DoctorSubscription.doctor_name == doctor_name
+            ).all()
+            
+            if not doctor_subs:
+                return {
+                    "status": "warning",
+                    "message": f"No subscribers found for doctor: {doctor_name}",
+                    "doctor_name": doctor_name,
+                    "subscribers": 0
+                }
+            
+            device_ids = [sub.device_id for sub in doctor_subs]
+            fcm_tokens_objs = db.query(FCMToken).filter(
+                FCMToken.device_id.in_(device_ids)
+            ).all()
+            
+            fcm_tokens = [token.fcm_token for token in fcm_tokens_objs]
+            target_desc = f"subscribers of {doctor_name}"
+        else:
+            # Send to ALL registered devices
+            fcm_tokens_objs = db.query(FCMToken).all()
+            fcm_tokens = [token.fcm_token for token in fcm_tokens_objs]
+            target_desc = "all registered devices"
+        
+        if not fcm_tokens:
+            return {
+                "status": "warning",
+                "message": f"No FCM tokens found for {target_desc}",
+                "tokens_found": 0
+            }
+        
+        # Send test notification
+        title = "🧪 Test Notification"
+        body = f"This is a test notification for {target_desc}. If you see this, notifications are working! ✅"
+        data = {
+            "type": "test",
+            "timestamp": str(datetime.now()),
+            "target": target_desc
+        }
+        
+        result = send_fcm_multicast(fcm_tokens, title, body, data)
+        
+        logger.info(f"Test notification sent: {result['success']} success, {result['failure']} failed")
+        
+        return {
+            "status": "success",
+            "message": f"Test notification sent to {target_desc}",
+            "tokens_sent": len(fcm_tokens),
+            "success_count": result['success'],
+            "failure_count": result['failure'],
+            "doctor_name": doctor_name if doctor_name else "N/A"
+        }
+        
+    except Exception as e:
+        logger.error(f"Test notification failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to send test notification: {str(e)}")
