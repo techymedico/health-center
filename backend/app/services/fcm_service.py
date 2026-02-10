@@ -27,8 +27,11 @@ def initialize_firebase():
             return None
         
         cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-        _firebase_app = firebase_admin.initialize_app(cred)
-        logger.info("Firebase Admin SDK initialized successfully")
+        # Initialize with explicit project_id to ensure proper API endpoints
+        _firebase_app = firebase_admin.initialize_app(cred, {
+            'projectId': 'iitjhealthcenter'
+        })
+        logger.info("Firebase Admin SDK initialized successfully for project: iitjhealthcenter")
         return _firebase_app
     except Exception as e:
         logger.error(f"Failed to initialize Firebase: {str(e)}")
