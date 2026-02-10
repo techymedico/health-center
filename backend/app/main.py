@@ -62,11 +62,12 @@ app.include_router(notifications.router, tags=["Notifications"])
 from app.routes import fcm
 app.include_router(fcm.router, tags=["FCM"])
 
-@app.get("/health", tags=["Health"])
-async def health_check():
+@app.get("/health/full")
+async def full_health():
     return {
-        "status": "ok",
-        "message": "Health Center API is running"
+        "db": "initialized",
+        "scheduler": "running",
+        "firebase": "loaded"
     }
 
 if __name__ == "__main__":
